@@ -2,14 +2,13 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use nalgebra::{SMatrix};
+use ndarray::{Array, ArrayD, IxDyn};
 
 fn read_data(path: &str) -> Result<Vec<u8>, u8> {
     let path = Path::new(path);
-    let display = path.display();
 
     let mut file = match File::open(&path) {
-        Err(why) => return Err(0),
+        Err(_) => return Err(0),
         Ok(file) => file,
     };
 
@@ -18,8 +17,8 @@ fn read_data(path: &str) -> Result<Vec<u8>, u8> {
     let result = file.read_to_end(&mut data);
 
     match result {
-        Ok(n) => Ok(data),
-        Err(e) => Err(0),
+        Ok(_) => Ok(data),
+        Err(_) => Err(0),
     }
 }
 
@@ -31,7 +30,7 @@ fn extract_labels(data: Vec<u8>) -> Result<Vec<u8>, u8> {
     Ok(bytes.to_vec())
 }
 
-fn extract_images(data: Vec<u8>) -> Result<Vec<SMatrix<f64, {28}, {28}>>, u8> {
+fn extract_images(data: Vec<u8>) -> Result<Vec<ArrayD<f64>>, u8> {
     let (magic, rest) = data.split_at(4);
     assert!(u32::from_be_bytes(magic.try_into().unwrap()) == 0x00000803);
 
@@ -47,17 +46,16 @@ fn extract_images(data: Vec<u8>) -> Result<Vec<SMatrix<f64, {28}, {28}>>, u8> {
     let mut result = vec![];
 
     bytes = matrixrest;
-    for enu in 0..n_images {
+    for _ in 0..n_images {
         let (matrix, rest) = bytes.split_at(784); // read 28*28 bytes into matrix
         bytes = rest;
-
-        result.push(SMatrix::from_fn(|i, j| matrix[j*28+i] as f64));
+        result.push(ArrayD::from_shape_vec(IxDyn(&[784, 1]), matrix.to_vec().into_iter().map(|x| x as f64).collect()).unwrap());
     }
 
     Ok(result)
 }
 
-pub fn load_training_data() -> Result<Vec<(SMatrix<f64, {28}, {28}>, u8)>, u8> {
+pub fn load_training_data() -> Result<Vec<(Array<f64, IxDyn>, u8)>, u8> {
 
     let imagedata = match read_data("assets/train-images-idx3-ubyte") {
         Ok(data) => data,
@@ -82,8 +80,8 @@ pub fn load_training_data() -> Result<Vec<(SMatrix<f64, {28}, {28}>, u8)>, u8> {
     let mut cosa = vec![];
 
    // FIXME: I dont have enough memory for this, so I'll curb the data for i in 0..images.len() {
-    for i in 0..10_000 {
-        cosa.push((images[i], labels[i]));
+    for i in 0..10 {
+        cosa.push((images[i].clone(), labels[i])); //FIXME: i dont think the clone is necessary
     }
     Ok(cosa)
 }
