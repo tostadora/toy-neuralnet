@@ -4,12 +4,13 @@ mod mnist;
 use network::Network;
 
 fn main() {
-    let mut nw = Network::new(vec![784,30,10]);
+    let nw = Network::new(vec![784,30,10]);
 
-    let mut training_data = match mnist::load_training_data() {
+    let training_data = match mnist::load_training_data() {
         Ok(t) => t,
         Err(_) => panic!("There was an error reading the files."),
     };
 
     nw.sgd(training_data, 30, 10, 3.0);
+
 }

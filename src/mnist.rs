@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use ndarray::{Array, ArrayD, IxDyn};
+use ndarray::Array2;
 
 fn read_data(path: &str) -> Result<Vec<u8>, u8> {
     let path = Path::new(path);
@@ -30,7 +30,7 @@ fn extract_labels(data: Vec<u8>) -> Result<Vec<u8>, u8> {
     Ok(bytes.to_vec())
 }
 
-fn extract_images(data: Vec<u8>) -> Result<Vec<ArrayD<f64>>, u8> {
+fn extract_images(data: Vec<u8>) -> Result<Vec<Array2<f64>>, u8> {
     let (magic, rest) = data.split_at(4);
     assert!(u32::from_be_bytes(magic.try_into().unwrap()) == 0x00000803);
 
@@ -49,13 +49,13 @@ fn extract_images(data: Vec<u8>) -> Result<Vec<ArrayD<f64>>, u8> {
     for _ in 0..n_images {
         let (matrix, rest) = bytes.split_at(784); // read 28*28 bytes into matrix
         bytes = rest;
-        result.push(ArrayD::from_shape_vec(IxDyn(&[784, 1]), matrix.to_vec().into_iter().map(|x| x as f64).collect()).unwrap());
+        result.push(Array2::from_shape_vec((784, 1), matrix.to_vec().into_iter().map(|x| x as f64).collect()).unwrap());
     }
 
     Ok(result)
 }
 
-pub fn load_training_data() -> Result<Vec<(Array<f64, IxDyn>, u8)>, u8> {
+pub fn load_training_data() -> Result<Vec<(Array2<f64>, u8)>, u8> {
 
     let imagedata = match read_data("assets/train-images-idx3-ubyte") {
         Ok(data) => data,
