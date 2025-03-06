@@ -12,10 +12,6 @@ pub struct Network {
 
 impl Network {
 
-    fn print_type<T>(_: &T) {
-        println!("{:?}", std::any::type_name::<T>());
-    }
-
     pub fn new(sizes: Vec<usize>) -> Network {
         let mut network = Network {
             weights: Vec::with_capacity(sizes.len() - 1),
@@ -55,7 +51,7 @@ impl Network {
     }
 
 
-    pub fn sgd(&self, mut tr_data: Vec<(Array2<f64>, u8)>, epochs: usize, mini_batch_size: usize, eta: f64) {
+    pub fn sgd(&mut self, mut tr_data: Vec<(Array2<f64>, u8)>, epochs: usize, mini_batch_size: usize, eta: f64) {
         let _n = tr_data.len();
 
         for _ in 0..epochs {
@@ -76,10 +72,13 @@ impl Network {
             // TODO: testing the data
         }
 
+        println!("{:?}", self.weights);
+        println!("{:?}", self.biases);
+
     }
     
 
-    fn update_mini_batch(&self, mini_batch: Vec<(Array2<f64>, u8)>, eta: f64) {
+    fn update_mini_batch(&mut self, mini_batch: Vec<(Array2<f64>, u8)>, eta: f64) {
         let mut nabla_b: Vec<Array2<f64>> = Vec::with_capacity(self.biases.len());
 
         for b in &self.biases {
@@ -100,15 +99,13 @@ impl Network {
             }
         }
 
-        println!("{:?}", self.weights);
-        for (mut w, nw) in std::iter::zip(&self.weights, nabla_w) {
-            w = &(w - (eta / mini_batch.len() as f64) * nw);
+        for (w, nw) in std::iter::zip(&mut self.weights, nabla_w) {
+            *w = &*w - (eta / mini_batch.len() as f64) * nw;
         }
 
-        for (mut b, nb) in std::iter::zip(&self.biases, nabla_b) {
-            b = &(b - (eta / mini_batch.len() as f64) * nb);
+        for (b, nb) in std::iter::zip(&mut self.biases, nabla_b) {
+            *b = &*b - (eta / mini_batch.len() as f64) * nb;
         }
-        println!("{:?}", self.weights);
     }
     
 
@@ -131,7 +128,7 @@ impl Network {
         let mut zs: Vec<Array2<f64>> = vec![];
 
         for (b, w) in std::iter::zip(&self.biases, &self.weights) {
-            println!("w: {:?}, a: {:?}, b: {:?}", w.shape(), &activations[activations.len() - 1].shape(), b.shape());
+            // println!("w: {:?}, a: {:?}, b: {:?}", w.shape(), &activations[activations.len() - 1].shape(), b.shape());
             let mut z = Array2::zeros((b.shape()[0], b.shape()[1]));
             ndarray::linalg::general_mat_mul(1.0, &w, &activations[activations.len() - 1], 1.0, &mut z);
             z = z + b;

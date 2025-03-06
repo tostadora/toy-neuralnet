@@ -80,7 +80,7 @@ pub fn load_training_data() -> Result<Vec<(Array2<f64>, u8)>, u8> {
     let mut cosa = vec![];
 
    // FIXME: I dont have enough memory for this, so I'll curb the data for i in 0..images.len() {
-    for i in 0..10 {
+    for i in 0..10_000 {
         cosa.push((images[i].clone(), labels[i])); //FIXME: i dont think the clone is necessary
     }
     Ok(cosa)
