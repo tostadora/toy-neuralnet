@@ -40,21 +40,22 @@ impl Network {
         output_activations - y as f64
     }
 
-    pub fn feedforward(&self, a: Array2<f64>) -> Array2<f64> {
+    pub fn feedforward(&self, a: &Array2<f64>) -> Array2<f64> {
         
         let mut activation: Array2<f64> = a.clone();
 
         for (b, w) in std::iter::zip(self.biases.clone(), self.weights.clone()) { // FIXME: this clones are not good
-            activation = Self::sigmoid(&(w * &activation + b));
+            let mut mul_result = Array2::zeros((w.shape()[0], activation.shape()[1]));
+            ndarray::linalg::general_mat_mul(1.0, &w, &activation, 1.0, &mut mul_result);
+            activation = mul_result + b;
         }
         activation
     }
 
 
-    pub fn sgd(&mut self, mut tr_data: Vec<(Array2<f64>, u8)>, epochs: usize, mini_batch_size: usize, eta: f64) {
-        let _n = tr_data.len();
+    pub fn sgd(&mut self, mut tr_data: Vec<(Array2<f64>, u8)>, epochs: usize, mini_batch_size: usize, eta: f64, test_data: Vec<(Array2<f64>, u8)>) {
 
-        for _ in 0..epochs {
+        for j in 0..epochs {
             tr_data.shuffle(&mut rng());
 
             let mini_batches = (0..mini_batch_size).map(|offset| {
@@ -69,11 +70,9 @@ impl Network {
                 self.update_mini_batch(mini_batch, eta);
             }
 
-            // TODO: testing the data
-        }
+            println!("Epoch {}: {} / {}", j, self.evaluate(&test_data), test_data.len());
 
-        println!("{:?}", self.weights);
-        println!("{:?}", self.biases);
+        }
 
     }
     
@@ -154,5 +153,24 @@ impl Network {
         std::iter::zip(nabla_b, nabla_w).collect() // Create a Vec of tuples
 
     }
+
+    fn evaluate(&self, test_data: &Vec<(Array2<f64>, u8)>) -> usize {
+
+        let mut ok_counter: usize = 0;
+
+        for (image, solution) in test_data {
+            let result = self.feedforward(image);
+
+            let max_idx: usize = result.iter().enumerate().max_by(|(_, a), (_, b)| a.total_cmp(b)).map(|(index, _)| index).unwrap();
+            if max_idx == *solution as usize {
+                ok_counter = ok_counter + 1;
+            }
+            
+        }
+
+        ok_counter
+
+    }
+
 }
 

@@ -36,7 +36,6 @@ fn extract_images(data: Vec<u8>) -> Result<Vec<Array2<f64>>, u8> {
 
     let (size, mut bytes) = rest.split_at(4);
     let n_images = u32::from_be_bytes(size.try_into().unwrap());
-    assert!(n_images == 60_000);
 
     let (msize, matrixrest) = bytes.split_at(8); // Two 4 bytes for the image size 28x28
     let (mrows, mcols) = msize.split_at(4);
@@ -81,6 +80,36 @@ pub fn load_training_data() -> Result<Vec<(Array2<f64>, u8)>, u8> {
 
    // FIXME: I dont have enough memory for this, so I'll curb the data for i in 0..images.len() {
     for i in 0..10_000 {
+        cosa.push((images[i].clone(), labels[i])); //FIXME: i dont think the clone is necessary
+    }
+    Ok(cosa)
+}
+
+pub fn load_test_data() -> Result<Vec<(Array2<f64>, u8)>, u8> {
+
+    let imagedata = match read_data("assets/t10k-images-idx3-ubyte") {
+        Ok(data) => data,
+        Err(n) => return Err(n),
+    };
+
+    let labeldata = match read_data("assets/t10k-labels-idx1-ubyte") {
+        Ok(data) => data,
+        Err(n) => return Err(n),
+    };
+
+    let labels = match extract_labels(labeldata) {
+        Ok(data) => data,
+        Err(n) => return Err(n),
+    };
+
+    let images = match extract_images(imagedata) {
+        Ok(data) => data,
+        Err(n) => return Err(n),
+    };
+
+    let mut cosa = vec![];
+
+    for i in 0..images.len() {
         cosa.push((images[i].clone(), labels[i])); //FIXME: i dont think the clone is necessary
     }
     Ok(cosa)

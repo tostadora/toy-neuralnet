@@ -11,6 +11,11 @@ fn main() {
         Err(_) => panic!("There was an error reading the files."),
     };
 
-    nw.sgd(training_data, 30, 10, 3.0);
+    let test_data = match mnist::load_test_data() {
+        Ok(t) => t,
+        Err(_) => panic!("There was an error reading the files."),
+    };
+
+    nw.sgd(training_data, 30, 10, 3.0, test_data);
 
 }
